@@ -25,6 +25,7 @@ BOT = os.getenv('BOT_KEY')
 IA = os.getenv('GENIA_KEY')
 
 
+
 # Configuración del logging
 logging.basicConfig(
     filename='bot_errors.log',  # Nombre del archivo de logs
