@@ -459,7 +459,7 @@ def enviar_encuesta(message):
         
         
 #Prueba pendiente por probar *NO FUNCIONAL*
-# @bot.poll_answer_handler(commands=['prueba'])
-# def handle_poll_answer(pollAnswer):
-#     print(pollAnswer)
+@bot.poll_answer_handler(commands=['prueba'])
+def handle_poll_answer(pollAnswer):
+    print(pollAnswer)
 
