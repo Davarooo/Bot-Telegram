@@ -482,3 +482,7 @@ def enviar_terminos(message):
 def handle_poll_answer(pollAnswer):
     print(pollAnswer)
 
+#Prueba pendiente por probar *NO FUNCIONAL*
+@bot.poll_answer_handler(commands=['prueba'])
+def handle_poll_answer(pollAnswer):
+    print(pollAnswer)
