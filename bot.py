@@ -455,26 +455,26 @@ def enviar_encuesta(message):
 #     except Exception as e:
 #         logging.error(f"Error al enviar la calificación: {str(e)}")  
 
-# @bot.message_handler(commands=['condiciones'])
-# def enviar_terminos(message):
-#     try:
-#         # Crea botones inline
-#         markup = telebot.types.InlineKeyboardMarkup()
-#         markup.add(
-#             telebot.types.InlineKeyboardButton("📄 Términos y condiciones", url="https://maaji.com.co/pages/terms-conditions"),
-#             telebot.types.InlineKeyboardButton("✅ Aceptar", callback_data="aceptar_terminos"),
-#             telebot.types.InlineKeyboardButton("❌ Rechazar", callback_data="rechazar_terminos")
-#         )
+@bot.message_handler(commands=['condiciones'])
+def enviar_terminos(message):
+    try:
+        # Crea botones inline
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup.add(
+            telebot.types.InlineKeyboardButton("📄 Términos y condiciones", url="https://maaji.com.co/pages/terms-conditions"),
+            telebot.types.InlineKeyboardButton("✅ Aceptar", callback_data="aceptar_terminos"),
+            telebot.types.InlineKeyboardButton("❌ Rechazar", callback_data="rechazar_terminos")
+        )
 
-#         # Envía todo en un solo mensaje
-#         bot.send_message(
-#             chat_id=message.chat.id,
-#             text="¿Aceptas nuestros términos y condiciones? 😊",
-#             reply_markup=markup
-#         )
-#     except Exception as e:
-#         bot.reply_to(message, f"Error: {str(e)}")
-#         logging.error(f"Error al enviar los términos y condiciones: {str(e)}")
+        # Envía todo en un solo mensaje
+        bot.send_message(
+            chat_id=message.chat.id,
+            text="¿Aceptas nuestros términos y condiciones? 😊",
+            reply_markup=markup
+        )
+    except Exception as e:
+        bot.reply_to(message, f"Error: {str(e)}")
+        logging.error(f"Error al enviar los términos y condiciones: {str(e)}")
         
         
 # #Prueba pendiente por probar *NO FUNCIONAL*
