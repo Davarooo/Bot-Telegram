@@ -477,12 +477,12 @@ def enviar_terminos(message):
         logging.error(f"Error al enviar los términos y condiciones: {str(e)}")
         
         
-#Prueba pendiente por probar *NO FUNCIONAL*
-@bot.poll_answer_handler(commands=['prueba'])
-def handle_poll_answer(pollAnswer):
-    print(pollAnswer)
+# #Prueba pendiente por probar *NO FUNCIONAL*
+# @bot.poll_answer_handler(commands=['prueba'])
+# def handle_poll_answer(pollAnswer):
+#     print(pollAnswer)
 
-#Prueba pendiente por probar *NO FUNCIONAL*
-@bot.poll_answer_handler(commands=['prueba'])
-def handle_poll_answer(pollAnswer):
-    print(pollAnswer)
+# #Prueba pendiente por probar *NO FUNCIONAL*
+# @bot.poll_answer_handler(commands=['prueba'])
+# def handle_poll_answer(pollAnswer):
+#     print(pollAnswer)
