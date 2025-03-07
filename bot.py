@@ -6,10 +6,11 @@ import time
 import subprocess
 import requests
 import logging
+from datetime import datetime
 from openpyxl import load_workbook
 from model import model
 from data import guardar_datos_usuario,verificar_registro, usuarios
-from modelosdb import Usuario
+from modelosdb import AnalisisSentimiento, Usuario
 from Ejecuciones import EjecucionesBOT
 from peewee import DoesNotExist
 from dotenv import load_dotenv
@@ -475,6 +476,66 @@ def enviar_terminos(message):
     except Exception as e:
         bot.reply_to(message, f"Error: {str(e)}")
         logging.error(f"Error al enviar los términos y condiciones: {str(e)}")
+        
+# #Función `guardar_analisis_sentimiento()
+
+# def guardar_analisis_sentimiento(usuario, respuesta_texto, analisis_ia):
+#     # Crear un nuevo modelo en tu base de datos para almacenar análisis
+#     AnalisisSentimiento.create(
+#         usuario=usuario,
+#         respuesta=respuesta_texto,
+#         sentimiento=extraer_sentimiento(analisis_ia.text),  # Función para parsear la respuesta de la IA
+#         fecha=datetime.now()
+#     )
+    
+# #Analiza el sentimiento del mensaje
+# analisis = model.generate_content(f"Analiza el sentimiento de: {message.text}") 
+
+# #Funcion Extracción Estructurada
+# def extraer_sentimiento(texto_analisis):
+#     # Ejemplo de texto_analisis: "El sentimiento es positivo con un 90% de confianza."
+#     if "positivo" in texto_analisis.lower():
+#         return "Positivo"
+#     elif "negativo" in texto_analisis.lower():
+#         return "Negativo"
+#     else:
+#         return "Neutral"
+    
+# #if pregunta_actual.tipo == "texto_libre":
+#     try:
+#         # Generar análisis
+#         prompt = f"""
+#         Analiza el sentimiento del siguiente texto corporativo y responde en JSON:
+#         {message.text}
+
+#         Formato requerido:
+#         {{
+#             "sentimiento": "Positivo|Neutral|Negativo",
+#             "razones": ["lista", "de", "palabras_clave"]
+#         }}
+#         """
+        
+#         response = model.generate_content(prompt)
+#         analisis_data = json.loads(response.text)
+        
+#         # Guardar en base de datos
+#         AnalisisSentimiento.create(
+#             usuario=usuario,
+#             respuesta=message.text,
+#             sentimiento=analisis_data["sentimiento"],
+#             metadata=json.dumps(analisis_data)
+#         )
+        
+#     except Exception as e:
+#         logging.error(f"Error en análisis de sentimiento: {str(e)}")
+#         bot.reply_to(message, "⚠️ Error al analizar la respuesta. Se guardó solo el texto.")
+# #Base de datos
+# class AnalisisSentimiento(BaseModel):
+#     usuario = ForeignKeyField(Usuario)
+#     respuesta = TextField()
+#     sentimiento = CharField()  # Positivo/Neutral/Negativo
+#     fecha = DateTimeField(default=datetime.now)
+#     metadata = TextField(null=True)  # Para guardar raw de la IA si es necesario
         
         
 # #Prueba pendiente por probar *NO FUNCIONAL*
