@@ -10,10 +10,12 @@ from datetime import datetime
 from openpyxl import load_workbook
 from model import model
 from data import guardar_datos_usuario,verificar_registro, usuarios
-from modelosdb import AnalisisSentimiento, Usuario
+# from modelosdb import AnalisisSentimiento, Usuario
 from Ejecuciones import EjecucionesBOT
 from peewee import DoesNotExist
 from dotenv import load_dotenv
+from modelosdb import Usuario
+# from bot import bot, registrar_nombre
 # from openai import OpenAI #DEEPSEEK IMPORTACIÓN
 load_dotenv()
 
@@ -46,7 +48,42 @@ chat_session = model.start_chat()
 # Variable para controlar el estado de la IA
 ia_activada = True
 
+# usuarios_que_aceptaron = set()
 
+# def enviar_terminos(message):
+#     try:
+#         # Crea botones inline
+#         markup = telebot.types.InlineKeyboardMarkup()
+#         markup.add(
+#             telebot.types.InlineKeyboardButton("📄 Términos y condiciones", url="https://maaji.com.co/pages/terms-conditions"),
+#             telebot.types.InlineKeyboardButton("✅ Aceptar", callback_data="aceptar_terminos"),
+#             telebot.types.InlineKeyboardButton("❌ Rechazar", callback_data="rechazar_terminos")
+#         )
+
+#         # Envía el mensaje con los términos y condiciones
+#         bot.send_message(
+#             chat_id=message.chat.id,
+#             text="¿Aceptas nuestros términos y condiciones? 😊",
+#             reply_markup=markup
+#         )
+#     except Exception as e:
+#         bot.reply_to(message, f"Error: {str(e)}")
+#         logging.error(f"Error al enviar los términos y condiciones: {str(e)}")
+
+# @bot.message_handler(func=lambda message: message.chat.id not in usuarios_que_aceptaron)
+# def iniciar_con_terminos(message):
+#     enviar_terminos(message)
+
+# @bot.callback_query_handler(func=lambda call: call.data in ["aceptar_terminos", "rechazar_terminos"])
+# def respuesta_terminos(call):
+#     if call.data == "aceptar_terminos":
+#         usuarios_que_aceptaron.add(call.message.chat.id)
+#         bot.send_message(call.message.chat.id, "¡Gracias por aceptar nuestros términos y condiciones! 🎉")
+#     else:
+#         bot.send_message(call.message.chat.id, "Has rechazado los términos. No podrás continuar. ❌")
+
+# # Ejecutar el bot
+# bot.polling()
 
 # Manejador para el comando /start
 @bot.message_handler(commands=['start','menu'])
@@ -546,4 +583,7 @@ def enviar_terminos(message):
 # #Prueba pendiente por probar *NO FUNCIONAL*
 # @bot.poll_answer_handler(commands=['prueba'])
 # def handle_poll_answer(pollAnswer):
-#     print(pollAnswer)
+#     print(pollAnswer
+
+
+
