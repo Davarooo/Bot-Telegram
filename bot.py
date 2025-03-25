@@ -15,6 +15,7 @@ from Ejecuciones import EjecucionesBOT
 from peewee import DoesNotExist
 from dotenv import load_dotenv
 from modelosdb import Usuario
+from telebot import types
 # from bot import bot, registrar_nombre
 # from openai import OpenAI #DEEPSEEK IMPORTACIÓN
 load_dotenv()
@@ -85,6 +86,46 @@ ia_activada = True
 # # Ejecutar el bot
 # bot.polling()
 
+
+# Ruta de la carpeta donde se guardarán las imágenes
+CARPETA_IMAGENES = r"C:\Users\PDESARROLLO2\OneDrive - MAS S.A.S\Escritorio\MaajiTelegrambot2025\imagenes"
+
+# Crear la carpeta si no existe
+if not os.path.exists(CARPETA_IMAGENES):
+    os.makedirs(CARPETA_IMAGENES)
+
+# Función para guardar la imagen
+def guardar_imagen(message: types.Message):
+    try:
+        # Verificar si el mensaje contiene una imagen
+        if message.photo:
+            # Obtener la imagen enviada por el usuario
+            file_id = message.photo[-1].file_id  # Obtener el file_id de la imagen en la mejor calidad
+            file_info = bot.get_file(file_id)  # Obtener la información del archivo
+            downloaded_file = bot.download_file(file_info.file_path)  # Descargar la imagen
+
+            # Crear un nombre único para el archivo
+            nombre_archivo = f"imagen_{message.from_user.id}_{message.date}.jpg"
+            ruta_archivo = os.path.join(CARPETA_IMAGENES, nombre_archivo)
+
+            # Guardar la imagen en la carpeta local
+            with open(ruta_archivo, 'wb') as new_file:
+                new_file.write(downloaded_file)
+
+            # Responder al usuario
+            bot.reply_to(message, f"✅ Imagen guardada correctamente en: {ruta_archivo}")
+        else:
+            bot.reply_to(message, "❌ No se detectó una imagen. Por favor, envía una imagen.")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error al guardar la imagen: {str(e)}")
+
+@bot.message_handler(content_types=['photo'])
+def recibir_imagen(message):
+    guardar_imagen(message)
+
+
+
+
 # Manejador para el comando /start
 @bot.message_handler(commands=['start','menu'])
 def send_start(message):
@@ -114,7 +155,8 @@ def mostrar_menu(message):
         comandos_otras = [
             "1. Opción 1: Ejecucion Area Tecnologia",
             "2. Opción 2: Bot de Amazón",
-            "3. Cancelar Proceso\n\n"
+            "3. Cancelar Proceso\n\n",
+            "4  Enviar Comprobante"
             "Recuerda que si usas el comando /menu o /start te permitirá regresar al menú!"
         ]
         message_text = "Selecciona tu área escribiendo el número correspondiente:\n" + "\n".join(comandos_otras)
@@ -139,6 +181,9 @@ def procesar_seleccion_menu(message):
             # Si el usuario selecciona la opción 2
             EjecucionesBOT.opcion_2(bot,message)
         elif message.text == '3':
+            bot.send_message(chat_id, "Por favor, envía la imagen que deseas guardar.")
+            bot.register_next_step_handler(message, recibir_imagen)
+        elif message.text == '4':
             # Si el usuario selecciona la opción 3
             EjecucionesBOT.cancelar_proceso(bot,message) #PROCESO
         else:
