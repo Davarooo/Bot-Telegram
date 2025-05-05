@@ -10,14 +10,14 @@ from datetime import datetime
 from openpyxl import load_workbook
 from model import model
 from data import guardar_datos_usuario,verificar_registro, usuarios
-# from modelosdb import AnalisisSentimiento, Usuario
+
 from Ejecuciones import EjecucionesBOT
 from peewee import DoesNotExist
 from dotenv import load_dotenv
 from modelosdb import Usuario
 from telebot import types
-# from bot import bot, registrar_nombre
-# from openai import OpenAI #DEEPSEEK IMPORTACIÓN
+
+
 load_dotenv()
 
 CORREOS_FILE = "C:/Users/PDESARROLLO2/OneDrive - MAS S.A.S/Escritorio/MaajiTelegrambot2025/Correos/Bot2025.xlsx"
@@ -49,83 +49,6 @@ chat_session = model.start_chat()
 # Variable para controlar el estado de la IA
 ia_activada = True
 
-# usuarios_que_aceptaron = set()
-
-# def enviar_terminos(message):
-#     try:
-#         # Crea botones inline
-#         markup = telebot.types.InlineKeyboardMarkup()
-#         markup.add(
-#             telebot.types.InlineKeyboardButton("📄 Términos y condiciones", url="https://maaji.com.co/pages/terms-conditions"),
-#             telebot.types.InlineKeyboardButton("✅ Aceptar", callback_data="aceptar_terminos"),
-#             telebot.types.InlineKeyboardButton("❌ Rechazar", callback_data="rechazar_terminos")
-#         )
-
-#         # Envía el mensaje con los términos y condiciones
-#         bot.send_message(
-#             chat_id=message.chat.id,
-#             text="¿Aceptas nuestros términos y condiciones? 😊",
-#             reply_markup=markup
-#         )
-#     except Exception as e:
-#         bot.reply_to(message, f"Error: {str(e)}")
-#         logging.error(f"Error al enviar los términos y condiciones: {str(e)}")
-
-# @bot.message_handler(func=lambda message: message.chat.id not in usuarios_que_aceptaron)
-# def iniciar_con_terminos(message):
-#     enviar_terminos(message)
-
-# @bot.callback_query_handler(func=lambda call: call.data in ["aceptar_terminos", "rechazar_terminos"])
-# def respuesta_terminos(call):
-#     if call.data == "aceptar_terminos":
-#         usuarios_que_aceptaron.add(call.message.chat.id)
-#         bot.send_message(call.message.chat.id, "¡Gracias por aceptar nuestros términos y condiciones! 🎉")
-#     else:
-#         bot.send_message(call.message.chat.id, "Has rechazado los términos. No podrás continuar. ❌")
-
-# # Ejecutar el bot
-# bot.polling()
-
-
-# Ruta de la carpeta donde se guardarán las imágenes
-CARPETA_IMAGENES = r"C:\Users\PDESARROLLO2\OneDrive - MAS S.A.S\Escritorio\MaajiTelegrambot2025\imagenes"
-
-# Crear la carpeta si no existe
-if not os.path.exists(CARPETA_IMAGENES):
-    os.makedirs(CARPETA_IMAGENES)
-
-# Función para guardar la imagen
-def guardar_imagen(message: types.Message):
-    try:
-        # Verificar si el mensaje contiene una imagen
-        if message.photo:
-            # Obtener la imagen enviada por el usuario
-            file_id = message.photo[-1].file_id  # Obtener el file_id de la imagen en la mejor calidad
-            file_info = bot.get_file(file_id)  # Obtener la información del archivo
-            downloaded_file = bot.download_file(file_info.file_path)  # Descargar la imagen
-
-            # Crear un nombre único para el archivo
-            nombre_archivo = f"imagen_{message.from_user.id}_{message.date}.jpg"
-            ruta_archivo = os.path.join(CARPETA_IMAGENES, nombre_archivo)
-
-            # Guardar la imagen en la carpeta local
-            with open(ruta_archivo, 'wb') as new_file:
-                new_file.write(downloaded_file)
-
-            # Responder al usuario
-            bot.reply_to(message, f"✅ Imagen guardada correctamente en: {ruta_archivo}")
-        else:
-            bot.reply_to(message, "❌ No se detectó una imagen. Por favor, envía una imagen.")
-    except Exception as e:
-        bot.reply_to(message, f"❌ Error al guardar la imagen: {str(e)}")
-
-@bot.message_handler(content_types=['photo'])
-def recibir_imagen(message):
-    guardar_imagen(message)
-
-
-
-
 # Manejador para el comando /start
 @bot.message_handler(commands=['start','menu'])
 def send_start(message):
@@ -153,10 +76,11 @@ def mostrar_menu(message):
         
         chat_id = message.chat.id
         comandos_otras = [
-            "1. Opción 1: Ejecucion Area Tecnologia",
+            "1. Opción 1: Ejecucion Area Tecnologia", #Procesos del area de tecnologia, 
             "2. Opción 2: Bot de Amazón",
-            "3. Cancelar Proceso\n\n",
-            "4  Enviar Comprobante"
+            "3. Enviar Comprobante",
+            "4. Descargar Excel Actualizado",
+            "5. Cancelar proceso\n\n",
             "Recuerda que si usas el comando /menu o /start te permitirá regresar al menú!"
         ]
         message_text = "Selecciona tu área escribiendo el número correspondiente:\n" + "\n".join(comandos_otras)
@@ -181,14 +105,20 @@ def procesar_seleccion_menu(message):
             # Si el usuario selecciona la opción 2
             EjecucionesBOT.opcion_2(bot,message)
         elif message.text == '3':
+               # Si el usuario selecciona la opción 3
             bot.send_message(chat_id, "Por favor, envía la imagen que deseas guardar.")
-            bot.register_next_step_handler(message, recibir_imagen)
+            bot.register_next_step_handler(message, lambda msg: EjecucionesBOT.opcion_3(bot, msg))
+            
         elif message.text == '4':
-            # Si el usuario selecciona la opción 3
-            EjecucionesBOT.cancelar_proceso(bot,message) #PROCESO
+            EjecucionesBOT.descargar_excel(bot, message)
+    
+        elif message.text == '5':
+            # Si el usuario selecciona la opción 5
+            EjecucionesBOT.cancelar_proceso(bot,message)
+            
         else:
             # Si el usuario elige una opción no válida
-            bot.send_message(chat_id, "Opción no válida. Por favor selecciona 1,2 o 3")
+            bot.send_message(chat_id, "Opción no válida. Por favor selecciona 1, 2, 3 o 4.")
             mostrar_menu(message)
     except Exception as e:
         logging.error(f"Error al procesar la selección del menú: {str(e)}")  
@@ -538,10 +468,13 @@ def enviar_encuesta(message):
 #     except Exception as e:
 #         logging.error(f"Error al enviar la calificación: {str(e)}")  
 
+# terminos y condiciones *FUNCIONAL*
+
+# Removed duplicate definition of enviar_terminos
+
 @bot.message_handler(commands=['condiciones'])
 def enviar_terminos(message):
     try:
-        # Crea botones inline
         markup = telebot.types.InlineKeyboardMarkup()
         markup.add(
             telebot.types.InlineKeyboardButton("📄 Términos y condiciones", url="https://maaji.com.co/pages/terms-conditions"),
@@ -549,7 +482,6 @@ def enviar_terminos(message):
             telebot.types.InlineKeyboardButton("❌ Rechazar", callback_data="rechazar_terminos")
         )
 
-        # Envía todo en un solo mensaje
         bot.send_message(
             chat_id=message.chat.id,
             text="¿Aceptas nuestros términos y condiciones? 😊",
@@ -557,67 +489,46 @@ def enviar_terminos(message):
         )
     except Exception as e:
         bot.reply_to(message, f"Error: {str(e)}")
-        logging.error(f"Error al enviar los términos y condiciones: {str(e)}")
-        
-# #Función `guardar_analisis_sentimiento()
+        logging.error(f"Error al enviar términos: {str(e)}")
 
-# def guardar_analisis_sentimiento(usuario, respuesta_texto, analisis_ia):
-#     # Crear un nuevo modelo en tu base de datos para almacenar análisis
-#     AnalisisSentimiento.create(
-#         usuario=usuario,
-#         respuesta=respuesta_texto,
-#         sentimiento=extraer_sentimiento(analisis_ia.text),  # Función para parsear la respuesta de la IA
-#         fecha=datetime.now()
-#     )
-    
-# #Analiza el sentimiento del mensaje
-# analisis = model.generate_content(f"Analiza el sentimiento de: {message.text}") 
+# Manejador para aceptar términos
+@bot.callback_query_handler(func=lambda call: call.data == 'aceptar_terminos')
+def aceptar_terminos(call):
+    try:
+        # Editar el mensaje original para eliminar los botones
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text="¡Gracias por aceptar los términos y condiciones! 😊\n\nAhora puedes disfrutar de la plataforma.",
+            reply_markup=None
+        )
+        
+        # Opcional: Guardar en base de datos que el usuario aceptó
+        # guardar_aceptacion(call.from_user.id)
+        
+    except Exception as e:
+        logging.error(f"Error al aceptar términos: {str(e)}")
 
-# #Funcion Extracción Estructurada
-# def extraer_sentimiento(texto_analisis):
-#     # Ejemplo de texto_analisis: "El sentimiento es positivo con un 90% de confianza."
-#     if "positivo" in texto_analisis.lower():
-#         return "Positivo"
-#     elif "negativo" in texto_analisis.lower():
-#         return "Negativo"
-#     else:
-#         return "Neutral"
-    
-# #if pregunta_actual.tipo == "texto_libre":
-#     try:
-#         # Generar análisis
-#         prompt = f"""
-#         Analiza el sentimiento del siguiente texto corporativo y responde en JSON:
-#         {message.text}
+# Manejador para rechazar términos
+@bot.callback_query_handler(func=lambda call: call.data == 'rechazar_terminos')
+def rechazar_terminos(call):
+    try:
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=(
+                "❌ *No puedes continuar sin aceptar los términos.*\n\n"
+                "Por favor abstente de usar esta plataforma.\n\n"
+                "Recuerda que si usas el comando /menu o /start "
+                "te permitirá regresar al menú!"
+            ),
+            parse_mode="Markdown",
+            reply_markup=None
+        )
+        
+    except Exception as e:
+        logging.error(f"Error al rechazar términos: {str(e)}")
 
-#         Formato requerido:
-#         {{
-#             "sentimiento": "Positivo|Neutral|Negativo",
-#             "razones": ["lista", "de", "palabras_clave"]
-#         }}
-#         """
-        
-#         response = model.generate_content(prompt)
-#         analisis_data = json.loads(response.text)
-        
-#         # Guardar en base de datos
-#         AnalisisSentimiento.create(
-#             usuario=usuario,
-#             respuesta=message.text,
-#             sentimiento=analisis_data["sentimiento"],
-#             metadata=json.dumps(analisis_data)
-#         )
-        
-#     except Exception as e:
-#         logging.error(f"Error en análisis de sentimiento: {str(e)}")
-#         bot.reply_to(message, "⚠️ Error al analizar la respuesta. Se guardó solo el texto.")
-# #Base de datos
-# class AnalisisSentimiento(BaseModel):
-#     usuario = ForeignKeyField(Usuario)
-#     respuesta = TextField()
-#     sentimiento = CharField()  # Positivo/Neutral/Negativo
-#     fecha = DateTimeField(default=datetime.now)
-#     metadata = TextField(null=True)  # Para guardar raw de la IA si es necesario
         
         
 # #Prueba pendiente por probar *NO FUNCIONAL*
