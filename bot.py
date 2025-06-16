@@ -6,30 +6,32 @@ import time
 import subprocess
 import requests
 import logging
+import ventas
 from datetime import datetime
 from openpyxl import load_workbook
 from model import model
 from data import guardar_datos_usuario,verificar_registro, usuarios
-
-from Ejecuciones import EjecucionesBOT
+from tecnologia_process import *
 from peewee import DoesNotExist
-from dotenv import load_dotenv
 from modelosdb import Usuario
 from telebot import types
+from ventas import mostrar_submenu_ventas
+from ventas import manejar_opcion_submenu_ventas
 
 
-load_dotenv()
 
+
+# Import Update and CallbackContext for type hinting in async handler
+from telegram import Update
+from telegram.ext import CallbackContext
+ 
 CORREOS_FILE = "C:/Users/PDESARROLLO2/OneDrive - MAS S.A.S/Escritorio/MaajiTelegrambot2025/Correos/Bot2025.xlsx"
-
+ 
 #Variable para el bot
-BOT = os.getenv('BOT_KEY')
-
+BOT = '7441443568:AAGgPPelE3Sm7-lN6ZJFFW-7m12BYuMdPiE'
 #Variable del key de genia
-IA = os.getenv('GENIA_KEY')
-
-
-
+IA = 'AIzaSyCrjAcf2MtUmSMyhSzsBJ_o4ggO5aoyoV0'
+ 
 # Configuración del logging
 logging.basicConfig(
     filename='bot_errors.log',  # Nombre del archivo de logs
@@ -37,28 +39,26 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',  # Formato del log
     datefmt='%Y-%m-%d %H:%M:%S'  # Formato de fecha y hora
 )
-
-
 # # Configurar el bot de Telegram
 bot = telebot.TeleBot(BOT, parse_mode=None)
 genai.configure(api_key=IA)
-
+ 
 # Iniciar sesión de chat
 chat_session = model.start_chat()
-
+ 
 # Variable para controlar el estado de la IA
 ia_activada = True
-
+ 
 # Manejador para el comando /start
 @bot.message_handler(commands=['start','menu'])
 def send_start(message):
     try:
-        
+       
         chat_id = message.chat.id
         if verificar_registro(chat_id):
             try:            
                 usuario = Usuario.get(Usuario.chat_id == chat_id)  
-                bot.send_message(chat_id, f"🤖¡Hola de nuevo, {usuario.nombre} {usuario.apellido} del área {usuario.area}!")
+                bot.send_message(chat_id, f"🤖¡Hola de nuevo, {usuario.nombre} {usuario.apellido} del área {usuario.area}! \n\n ¿Qué proceso desear realizar?  ")
             except Usuario.DoesNotExist:
                 bot.send_message(chat_id, "No se pudo encontrar tu información en la base de datos.")
             #bot.send_message(chat_id, f"🤖¡Hola de nuevo, {Usuario.nombre}{Usuario.apellido} del área {Usuario.area}!")
@@ -70,64 +70,59 @@ def send_start(message):
     except Exception as e:
         logging.error(f"Error en el comando /start: {str(e) }")
    
-# Función para enviar el menú de funciones disponibles
+# # Función para enviar el menú de funciones disponibles
 def mostrar_menu(message):
     try:
-        
         chat_id = message.chat.id
         comandos_otras = [
-            "1. Opción 1: Ejecucion Area Tecnologia", #Procesos del area de tecnologia, 
-            "2. Opción 2: Bot de Amazón",
-            "3. Enviar Comprobante",
-            "4. Descargar Excel Actualizado",
-            "5. Cancelar proceso\n\n",
-            "Recuerda que si usas el comando /menu o /start te permitirá regresar al menú!"
+            "🖥️ 1. Proceso del Área de Tecnología", 
+            "📋 2. Reporte de Ventas",
+            "🚪 3. Salir del Bot"
+           
         ]
-        message_text = "Selecciona tu área escribiendo el número correspondiente:\n" + "\n".join(comandos_otras)
-        # respuesta = "Ejecuciones:\n" + "\n".join(comandos_otras)
-        # bot.send_message(message.chat.id, respuesta)
+        message_text = "📋 Elige una de las siguientes alternativas disponibles:\n\n" + "\n".join(comandos_otras)
         bot.send_message(chat_id, message_text)
         bot.register_next_step_handler(message, procesar_seleccion_menu)
     except Exception as e:
         logging.error(f"Error al mostrar el menú: {str(e)}")
-    
-# Funcion para procesar lo que el usuario seleccione segun el menu
+ 
+ 
 def procesar_seleccion_menu(message):
     try:
-        
-        chat_id = message.chat.id
-        
-        # opciones = None
         if message.text == '1':
-            # Si el usuario selecciona la opción 1
-            EjecucionesBOT.opcion_1(bot,message)
-        elif message.text == '2':
-            # Si el usuario selecciona la opción 2
-            EjecucionesBOT.opcion_2(bot,message)
-        elif message.text == '3':
-               # Si el usuario selecciona la opción 3
-            bot.send_message(chat_id, "Por favor, envía la imagen que deseas guardar.")
-            bot.register_next_step_handler(message, lambda msg: EjecucionesBOT.opcion_3(bot, msg))
-            
-        elif message.text == '4':
-            EjecucionesBOT.descargar_excel(bot, message)
-    
-        elif message.text == '5':
-            # Si el usuario selecciona la opción 5
-            EjecucionesBOT.cancelar_proceso(bot,message)
-            
-        else:
-            # Si el usuario elige una opción no válida
-            bot.send_message(chat_id, "Opción no válida. Por favor selecciona 1, 2, 3 o 4.")
-            mostrar_menu(message)
-    except Exception as e:
-        logging.error(f"Error al procesar la selección del menú: {str(e)}")  
-        
+            TecnologiaProcess.menu_tecnologia(bot, message)
 
+        elif message.text == '2':
+            ventas.mostrar_submenu_ventas(bot, message)
+
+        elif message.text == '3':
+            TecnologiaProcess.salir_del_bot(bot, message)
+
+        else:
+            bot.send_message(message.chat.id, "⚠️ Opción no válida")
+
+    except Exception as e:
+        logging.error(f"Error: {str(e)}")
+        bot.send_message(message.chat.id, "❌ Error procesando tu solicitud")
+
+   
+# # Funcion para procesar lo que el usuario seleccione segun el menu
+# def procesar_seleccion_menu(message):
+#     try:
+#         if message.text == '1':
+#             TecnologiaProcess.menu_tecnologia(bot, message)
+#         elif message.text == '2':
+#            ventas.generar_reporte_ventas(bot, message)
+           
+#         elif message.text == '3':
+#             TecnologiaProcess.salir_del_bot(bot, message)
+#     except Exception as e:
+#         logging.error(f"Error: {str(e)}")
+ 
 # Función para registrar el nombre del usuario
 def registrar_nombre(message):
     try:
-        
+       
         chat_id = message.chat.id
         nombre = message.text
         usuarios[chat_id] = {'nombre': nombre}
@@ -135,12 +130,10 @@ def registrar_nombre(message):
         bot.register_next_step_handler(message, confirmar_nombre)
     except Exception as e:
         logging.error(f"Error al registrar el nombre: {str(e)}")
-
-
+ 
 # Función para confirmar el nombre del usuario
 def confirmar_nombre(message):
-    try:
-        
+    try:    
         chat_id = message.chat.id
         confirmacion = message.text.lower()
         if confirmacion == 'si':
@@ -156,11 +149,10 @@ def confirmar_nombre(message):
             bot.register_next_step_handler(message, confirmar_nombre)
     except Exception as e:
         logging.error(f"Error al confirmar el nombre: {str(e)}")
-        
+       
 # Función para registrar el apellido del usuario
 def registrar_apellido(message):
-    try:
-        
+    try:      
         chat_id = message.chat.id
         apellido = message.text
         usuarios[chat_id]['apellido'] = apellido
@@ -168,12 +160,11 @@ def registrar_apellido(message):
         bot.register_next_step_handler(message, confirmar_apellido)
     except Exception as e:
         logging.error(f"Error al registrar el apellido: {str(e)}")
-        
-
+       
+ 
 # Función para confirmar el apellido del usuario
 def confirmar_apellido(message):
     try:
-        
         chat_id = message.chat.id
         confirmacion = message.text.lower()
         if confirmacion == 'si':
@@ -190,60 +181,53 @@ def confirmar_apellido(message):
             bot.register_next_step_handler(message, confirmar_apellido)
     except Exception as e:
         logging.error(f"Error al confirmar el apellido: {str(e)}")
-        
-
+       
+ 
 #Función para registrar el apellido del usuario
-
 def registrar_correo(message):
     try:
-        
         chat_id = message.chat.id
         correo = message.text.strip()
         # Inicializamos correos_validos en None para asegurarnos de que siempre tenga un valor    
         correos_validos = None
-        
-        if not os.path.exists(CORREOS_FILE): 
+       
+        if not os.path.exists(CORREOS_FILE):
             print("No se encontro el archivo correos")  
             bot.send_message(chat_id,"No se encontro el archivo correos")
             return
-        
-        try:       
+       
+        try:      
             df = pd.read_excel(CORREOS_FILE) #Verifica los datos del excel
             if 'correo' not in df.columns: #verifica la columna correo
                 bot.send_message(chat_id, "El archivo no contiene la columna correo")
                 usuarios.pop(chat_id, None) #
-                send_start(message)  # Reinicia el proceso 
+                send_start(message)  # Reinicia el proceso
             correos_validos = df['correo'].tolist() #da la lista de correos validos
         except Exception as e:
             print(f"Error al leer el archivo de correos: {e}") #Saca el error
-            
-        if  correo not in correos_validos: #verifica si el correo esta en la lista 
+           
+        if  correo not in correos_validos: #verifica si el correo esta en la lista
             bot.send_message(chat_id, "Lo siento, pero tu correo no hace parte de la empresa")
             usuarios.pop(chat_id, None) #
             send_start(message)  # Reinicia el proceso
-    
-        
-        
-
-
+ 
         # # Verificar si el correo ya existe en la base de datos
         for usuario in Usuario.select():
             if usuario.correo == correo:
                 bot.send_message(chat_id, "⚠️ Este correo ya está registrado. No puedes usarlo nuevamente.")
                 usuarios.pop(chat_id, None)
                 send_start(message)  # Reinicia el proceso
-
-
+ 
         # Si no está duplicado, continúa con el flujo
         usuarios[chat_id]['correo'] = correo
         bot.send_message(chat_id, f"¿Tu correo es {correo}?")
         bot.register_next_step_handler(message, confirmar_correo)
     except Exception as e:
         logging.error(f"Error al registrar el correo: {str(e)}")
-
+ 
 def confirmar_correo(message):
     try:
-        
+       
         chat_id = message.chat.id
         confirmacion = message.text.lower()
         if confirmacion == 'si':
@@ -256,29 +240,29 @@ def confirmar_correo(message):
             send_start(message)  # Reinicia el proceso de registro
         else:
             bot.send_message(chat_id, "Por favor responda 'Si' o 'No'.")
-            bot.register_next_step_handler(message, confirmar_correo) 
+            bot.register_next_step_handler(message, confirmar_correo)
     except Exception as e:
         logging.error(f"Error al confirmar el correo: {str(e)}")
-            
-
-
-#Funcion Registro de telefono 
-
+           
+ 
+ 
+#Funcion Registro de telefono
+ 
 def registrar_telefono (message):
     try:
         chat_id = message.chat.id
         telefono = message.text
-        usuarios[chat_id]['telefono'] = telefono 
+        usuarios[chat_id]['telefono'] = telefono
         bot.send_message(chat_id, f"¿Tu número es {telefono}?")
         bot.register_next_step_handler(message, confirmar_telefono)
     except Exception as e:
         logging.error(f"Error al registrar el telefono: {str(e)}")
-
+ 
 #Confirmar Telefono
-    
+   
 def confirmar_telefono(message):
     try:
-        
+       
         chat_id = message.chat.id
         confirmacion = message.text.lower()
         if confirmacion == 'si':
@@ -294,29 +278,30 @@ def confirmar_telefono(message):
     except Exception as e:
         logging.error(f"Error al confirmar el telefono: {str(e)}")
        
-
+ 
 # Función para mostrar las opciones de área
 def mostrar_opciones_area(chat_id):
     try:
-        
+       
         opciones = [
             "1. Equipo Dev",
             "2. Soluciones",
             "3. Infraestructura",
             "4. Produccion",
-            "5. Cedi"
+            "5. Cedi",
+            "6. BI"
         ]
         message_text = "Selecciona tu área escribiendo el número correspondiente:\n" + "\n".join(opciones)
         bot.send_message(chat_id, message_text)
         bot.register_next_step_handler_by_chat_id(chat_id, process_area_step)
     except Exception as e:
         logging.error(f"Error al mostrar las opciones de área: {str(e)}")
-
-
+ 
+ 
 # Función para procesar la selección del área
 def process_area_step(message):
     try:
-        
+       
         chat_id = message.chat.id
         area = None
         if message.text == '1':
@@ -329,11 +314,13 @@ def process_area_step(message):
             area = "Produccion"
         elif message.text == '5':
             area = "Cedi"
+        elif message.text == '6':
+            area = "BI"
         else:
             bot.send_message(chat_id, "Por favor selecciona un número válido.")
             mostrar_opciones_area(chat_id)
             return
-        
+       
         usuarios[chat_id]['area'] = area
         message_text = (
             "Confirmación de registro:\n\n"
@@ -348,8 +335,8 @@ def process_area_step(message):
         bot.register_next_step_handler(message, confirmar_registro)
     except Exception as e:
         logging.error(f"Error al procesar la selección del área: {str(e)}")
-    
-    
+   
+   
 # Función para confirmar el registro
 def confirmar_registro(message):
     try:
@@ -369,12 +356,12 @@ def confirmar_registro(message):
             bot.register_next_step_handler(message, confirmar_registro)
     except Exception as e:
         logging.error(f"Error al confirmar el registro: {str(e)}")
-
+ 
 # Manejador para el comando /eliminar
 @bot.message_handler(commands=['eliminar'])
 def eliminar_registro(message):
     try:
-        
+       
         chat_id = message.chat.id
         # Verificar si existe el registro
         if verificar_registro(chat_id):
@@ -382,10 +369,44 @@ def eliminar_registro(message):
             bot.register_next_step_handler(message, confirmar_eliminacion)
         else:
             bot.send_message(chat_id, "No tienes ningún registro que eliminar.")
-            
+           
     except Exception as e:
         logging.error(f"Error al eliminar el registro: {str(e)}")
+    
+#     # funcion opcion graficos
+# @bot.message_handler(func=lambda message: True)
+# def manejar_mensajes(message):
+#     if message.text == '2':
+#         mostrar_submenu_ventas(bot, message)
+#     else:
+#         manejar_opcion_submenu_ventas(bot, message)
 
+# @bot.message_handler(func=lambda message: True)
+# def manejar_mensajes(message):
+#     if message.text in ['1', '2', '3']:
+#         manejar_opcion_submenu_ventas(bot, message)
+#     elif message.text == 'menu':  # usa esto para abrir el menú
+#         mostrar_submenu_ventas(bot, message)
+#     else:
+#         bot.send_message(message.chat.id, "❌ Opción no válida. Escribe 'menu' para ver las opciones.")
+
+@bot.message_handler(func=lambda message: True)
+def manejar_mensajes(message):
+    if message.text.lower() == 'menu':
+        mostrar_menu(message)  # ✅ Función ya existente
+    elif message.text in ['1', '2', '3', '4']:  # 👈 Aceptamos también la opción 4
+        manejar_opcion_submenu_ventas(bot, message)
+    else:
+        bot.send_message(message.chat.id, "❌ Opción no válida. Escribe 'menu' para volver al menú principal.")
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 # Función para confirmar la eliminación
 def confirmar_eliminacion(message):
     try:
@@ -409,52 +430,28 @@ def confirmar_eliminacion(message):
             bot.register_next_step_handler(message, confirmar_eliminacion)
     except Exception as e:
         logging.error(f"Error al confirmar la eliminación: {str(e)}")
-        
-# #Prueba #1
-
-@bot.message_handler(commands=['terminos'])
-def enviar_encuesta(message):
-    try:
-        
-        preguntas = ["¿Te gusta este bot?", "¿Qué área prefieres?"]
-        opciones = ["Sí", "No"], 
-        for i, pregunta in enumerate(preguntas):
-            bot.send_poll(chat_id=message.chat.id, question=pregunta, options=opciones[i], is_anonymous=False)
-    except Exception as e:
-        logging.error(f"Error al enviar la encuesta: {str(e)}")
-        
-# # Funcion para enviar una encuesta *FUNCIONAL*
-@bot.message_handler(commands=['encuesta'])
-def enviar_encuesta(message):
-    try:
-        
-        # Define una pregunta y opciones de ejemplo
-        pregunta = "¿Qué te parecio el bot? 😉"
-        opciones = ["Excelente", "Muy bueno", "Bueno", "Regular", "Malo"]
-
-        try:    
-            # Envía la encuesta
-            bot.send_poll(
-                chat_id=message.chat.id,
-                question=pregunta,
-                options=opciones,
-                is_anonymous=False  # Configura si la encuesta será anónima o no
-            )
-        except Exception as e:
-            bot.send_message(message.chat.id, f"Hubo un error al enviar la encuesta: {e}")
-    except Exception as e:
-        logging.error(f"Error al enviar la calificación: {str(e)}")
-    
        
-#PRUEBA #2 funcional 
-        
+# #Prueba #1
 # @bot.message_handler(commands=['terminos'])
 # def enviar_encuesta(message):
 #     try:
+       
+#         preguntas = ["¿Te gusta este bot?", "¿Qué área prefieres?"]
+#         opciones = ["Sí", "No"],
+#         for i, pregunta in enumerate(preguntas):
+#             bot.send_poll(chat_id=message.chat.id, question=pregunta, options=opciones[i], is_anonymous=False)
+#     except Exception as e:
+#         logging.error(f"Error al enviar la encuesta: {str(e)}")
+       
+# # # Funcion para enviar una encuesta *FUNCIONAL*
+# @bot.message_handler(commands=['encuesta'])
+# def enviar_encuesta(message):
+#     try:
+       
 #         # Define una pregunta y opciones de ejemplo
-#         pregunta = "Aceptas nuestros terminos y condiciones? 😉" 
-#         opciones = ["Sí", "No"]
-
+#         pregunta = "¿Qué te parecio el bot? 😉"
+#         opciones = ["Excelente", "Muy bueno", "Bueno", "Regular", "Malo"]
+ 
 #         try:    
 #             # Envía la encuesta
 #             bot.send_poll(
@@ -466,12 +463,8 @@ def enviar_encuesta(message):
 #         except Exception as e:
 #             bot.send_message(message.chat.id, f"Hubo un error al enviar la encuesta: {e}")
 #     except Exception as e:
-#         logging.error(f"Error al enviar la calificación: {str(e)}")  
-
-# terminos y condiciones *FUNCIONAL*
-
-# Removed duplicate definition of enviar_terminos
-
+#         logging.error(f"Error al enviar la calificación: {str(e)}")
+ 
 @bot.message_handler(commands=['condiciones'])
 def enviar_terminos(message):
     try:
@@ -481,7 +474,7 @@ def enviar_terminos(message):
             telebot.types.InlineKeyboardButton("✅ Aceptar", callback_data="aceptar_terminos"),
             telebot.types.InlineKeyboardButton("❌ Rechazar", callback_data="rechazar_terminos")
         )
-
+ 
         bot.send_message(
             chat_id=message.chat.id,
             text="¿Aceptas nuestros términos y condiciones? 😊",
@@ -490,7 +483,7 @@ def enviar_terminos(message):
     except Exception as e:
         bot.reply_to(message, f"Error: {str(e)}")
         logging.error(f"Error al enviar términos: {str(e)}")
-
+ 
 # Manejador para aceptar términos
 @bot.callback_query_handler(func=lambda call: call.data == 'aceptar_terminos')
 def aceptar_terminos(call):
@@ -502,13 +495,13 @@ def aceptar_terminos(call):
             text="¡Gracias por aceptar los términos y condiciones! 😊\n\nAhora puedes disfrutar de la plataforma.",
             reply_markup=None
         )
-        
+       
         # Opcional: Guardar en base de datos que el usuario aceptó
         # guardar_aceptacion(call.from_user.id)
-        
+       
     except Exception as e:
         logging.error(f"Error al aceptar términos: {str(e)}")
-
+ 
 # Manejador para rechazar términos
 @bot.callback_query_handler(func=lambda call: call.data == 'rechazar_terminos')
 def rechazar_terminos(call):
@@ -519,27 +512,10 @@ def rechazar_terminos(call):
             text=(
                 "❌ *No puedes continuar sin aceptar los términos.*\n\n"
                 "Por favor abstente de usar esta plataforma.\n\n"
-                "Recuerda que si usas el comando /menu o /start "
-                "te permitirá regresar al menú!"
             ),
             parse_mode="Markdown",
             reply_markup=None
         )
-        
+       
     except Exception as e:
         logging.error(f"Error al rechazar términos: {str(e)}")
-
-        
-        
-# #Prueba pendiente por probar *NO FUNCIONAL*
-# @bot.poll_answer_handler(commands=['prueba'])
-# def handle_poll_answer(pollAnswer):
-#     print(pollAnswer)
-
-# #Prueba pendiente por probar *NO FUNCIONAL*
-# @bot.poll_answer_handler(commands=['prueba'])
-# def handle_poll_answer(pollAnswer):
-#     print(pollAnswer
-
-
-

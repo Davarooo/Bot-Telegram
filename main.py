@@ -1,9 +1,12 @@
 import telebot
 import logging
+import bot 
 from bot import bot,registrar_nombre
 from model import chat_session
 from data import verificar_registro
 from modelosdb import Usuario
+from ventas import manejar_opcion_submenu_ventas
+
 
 
 
@@ -28,7 +31,8 @@ def echo_all(message):
             bot.register_next_step_handler(message, registrar_nombre)
     except Exception as e:
         logging.error("Error al procesar el mensaje:")
-
+        
+    
 
 
 
