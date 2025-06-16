@@ -7,9 +7,9 @@ import os
 # from .env import sp_site_url, sp_client_id, sp_client_secret
  
 #  datos sensibles
-site_url = 'https://maaji.sharepoint.com/sites/Actasdeentrega'
-client_id = '5c4a2faf-fb05-4584-97cd-ac545b04f94f'
-client_secret = 'NW82OFF+NGpEYnI5Zk9ySkVTYWp4ci5kWG5CVUFKVkVTZURUV2E4cw=='
+site_url = #URL DEL SHAREPOINT
+client_id =  #ID CLIENT SHAREPOINT
+client_secret =  #SECRET ID SHAREPOINT
 
 
 # #datos sensibles
