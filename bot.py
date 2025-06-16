@@ -28,9 +28,9 @@ from telegram.ext import CallbackContext
 CORREOS_FILE = "C:/Users/PDESARROLLO2/OneDrive - MAS S.A.S/Escritorio/MaajiTelegrambot2025/Correos/Bot2025.xlsx"
  
 #Variable para el bot
-BOT = '7441443568:AAGgPPelE3Sm7-lN6ZJFFW-7m12BYuMdPiE'
+BOT = #TELEGRAM KEY
 #Variable del key de genia
-IA = 'AIzaSyCrjAcf2MtUmSMyhSzsBJ_o4ggO5aoyoV0'
+IA = #GENIAI KEY
  
 # Configuración del logging
 logging.basicConfig(
